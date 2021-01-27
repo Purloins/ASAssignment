@@ -18,13 +18,14 @@ namespace ASAssignment1
     public partial class Login : System.Web.UI.Page
     {
         static int attemptCount = 0;
+        static int attemptLeft = 0;
         public string success { get; set; }
         public List<string> ErrorMessage { get; set; }
         string MYDBConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["MYDBConnection"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            
+
         }
 
         protected void btnLogin_Click(object sender, EventArgs e)
@@ -42,8 +43,11 @@ namespace ASAssignment1
 
             // Since every person will have its unique ID, then there will only be one row.
             // Use this information from this one row to display on the website.
-            if (ds.Tables[0].Rows.Count > 0) { 
-                string status = ds.Tables[0].Rows[0]["LockStatus"].ToString();
+            if (ds.Tables[0].Rows.Count > 0)
+            {
+                string status = getLockStatus(HttpUtility.HtmlEncode(tbEmail.Text.ToString().Trim()));
+                
+                bool booStatus = bool.Parse(status);
 
                 if (ValidateCaptcha())
                 {
@@ -63,11 +67,11 @@ namespace ASAssignment1
                             byte[] hashwWithSalt = hashing.ComputeHash(Encoding.UTF8.GetBytes(pwdWithSalt));
                             string userHash = Convert.ToBase64String(hashwWithSalt);
 
-                            if (status == "false")
+                            if(booStatus == false)
                             {
                                 if (userHash.Equals(dbHash))
                                 {
-                                
+
                                     Session["UserID"] = userID;
 
                                     // Create a new GUID and save into the session
@@ -81,27 +85,44 @@ namespace ASAssignment1
                                 }
                                 else
                                 {
-                                    lbErrorMsg.Text = "Wrong username or password." + attemptCount;
-                                    attemptCount = attemptCount + 1;
-
                                     // Check for 3 login attempts
                                     // If number of attempts reaches 3, lock the user out
                                     if (attemptCount == 3)
                                     {
-                                        lbErrorMsg.Text = "Your account has been temporarily locked due to three invalid login attempts.";
+                                        
                                         setLockStatus(tbEmail.Text);
                                         attemptCount = 0;
+
+                                        DateTime timeNow = DateTime.Now;
+                                        DateTime timerLOL = DateTime.Now.AddMinutes(10);
+                                        setLockTime(timeNow, userID);
+                                        setLockEnd(timerLOL, userID);
+                                        TimeSpan remainTime = getRemainingTime(timerLOL, timeNow);
+                                        lbErrorMsg.Text = "Your account has been temporarily locked due to three invalid login attempts.<br> Time left: " + remainTime;
                                     }
-                                    else if (status == "true")
+                                    else if (booStatus == true)
                                     {
                                         lbErrorMsg.Text = "Your account has been locked out temporarily.";
                                     }
-                                    
+                                    else
+                                    {
+                                        attemptCount = attemptCount + 1;
+                                        attemptLeft = 3 - attemptCount;
+                                        lbErrorMsg.Text = "Wrong username or password. <br>" + "Total number of attempts left: " + attemptLeft;
+                                    }
                                 }
                             }
                             else
                             {
-                                lbErrorMsg.Text = "Your account has been locked out temporarily.";
+                                DateTime timeStart = DateTime.Now;
+                                DateTime timeEnd = getTimeEnd(userID);
+                                TimeSpan remainTime = getRemainingTime(timeEnd, timeStart);
+                                lbErrorMsg.Text = "Your account has been locked out temporarily. <br> Time left: " + remainTime;
+
+                                if (remainTime <= TimeSpan.Zero)
+                                {
+                                    setLockStatusFalse(tbEmail.Text);
+                                }
                             }
                         }
                     }
@@ -117,10 +138,103 @@ namespace ASAssignment1
                 lbErrorMsg.Text = "Invalid username or password.";
             }
         }
+        private string getLockStatus(string userid)
+        {
+            string s = null;
+
+            SqlConnection con = new SqlConnection(MYDBConnectionString);
+            string sql = "SELECT LockStatus FROM Account WHERE Email=@USERID";
+            SqlCommand command = new SqlCommand(sql, con);
+            command.Parameters.AddWithValue("@USERID", userid);
+
+            con.Open();
+            using (SqlDataReader reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    s = reader["LockStatus"].ToString();
+                }
+            }
+            return s;
+        }
+        private void setLockTime(DateTime time, string userid)
+        {
+            SqlConnection connection = new SqlConnection(MYDBConnectionString);
+            string sql = "UPDATE Account SET LockoutTime='" + time + "' WHERE Email='" + userid + "'";
+
+            connection.Open();
+            SqlCommand cmd = new SqlCommand(sql, connection);
+            cmd.ExecuteNonQuery();
+        }
+        private void setLockEnd(DateTime time, string userid)
+        {
+            SqlConnection connection = new SqlConnection(MYDBConnectionString);
+            string sql = "UPDATE Account SET LockoutEndTime='" + time + "' WHERE Email='" + userid + "'";
+
+            connection.Open();
+            SqlCommand cmd = new SqlCommand(sql, connection);
+            cmd.ExecuteNonQuery();
+        }
+        private TimeSpan getRemainingTime(DateTime timeStart, DateTime timeEnd)
+        {
+            TimeSpan timeLeft = timeStart.Subtract(timeEnd);
+            return timeLeft;
+        }
+        private DateTime getTimeStart(string userid)
+        {
+            string t = null;
+
+            SqlConnection con = new SqlConnection(MYDBConnectionString);
+            string sql = "SELECT LockoutTime FROM Account WHERE Email=@USERID";
+            SqlCommand command = new SqlCommand(sql, con);
+            command.Parameters.AddWithValue("@USERID", userid);
+
+            con.Open();
+            using (SqlDataReader reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    t = reader["LockoutTime"].ToString();
+                }
+            }
+
+            DateTime timeStarted = Convert.ToDateTime(t);
+            return timeStarted;
+        }
+        private DateTime getTimeEnd(string userid)
+        {
+            string t = null;
+
+            SqlConnection con = new SqlConnection(MYDBConnectionString);
+            string sql = "SELECT LockoutEndTime FROM Account WHERE Email=@USERID";
+            SqlCommand command = new SqlCommand(sql, con);
+            command.Parameters.AddWithValue("@USERID", userid);
+
+            con.Open();
+            using (SqlDataReader reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    t = reader["LockoutEndTime"].ToString();
+                }
+            }
+
+            DateTime timeEnd = Convert.ToDateTime(t);
+            return timeEnd;
+        }
         private void setLockStatus(string email)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
             string sql = "UPDATE Account SET LockStatus='true' WHERE Email='" + email + "'";
+
+            connection.Open();
+            SqlCommand cmd = new SqlCommand(sql, connection);
+            cmd.ExecuteNonQuery();
+        }
+        private void setLockStatusFalse(string email)
+        {
+            SqlConnection connection = new SqlConnection(MYDBConnectionString);
+            string sql = "UPDATE Account SET LockStatus='false' WHERE Email='" + email + "'";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
@@ -203,7 +317,7 @@ namespace ASAssignment1
             {
                 using (WebResponse wResponse = req.GetResponse())
                 {
-                    using (StreamReader readStream = new StreamReader (wResponse.GetResponseStream()))
+                    using (StreamReader readStream = new StreamReader(wResponse.GetResponseStream()))
                     {
                         string jsonResponse = readStream.ReadToEnd();
 

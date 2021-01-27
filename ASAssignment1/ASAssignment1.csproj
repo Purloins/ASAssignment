@@ -78,7 +78,6 @@
     <Content Include="Login.aspx" />
     <Content Include="Registration.aspx" />
     <Content Include="Success.aspx" />
-    <Content Include="Test.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
@@ -106,13 +105,6 @@
     </Compile>
     <Compile Include="Success.aspx.designer.cs">
       <DependentUpon>Success.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Test.aspx.cs">
-      <DependentUpon>Test.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Test.aspx.designer.cs">
-      <DependentUpon>Test.aspx</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
