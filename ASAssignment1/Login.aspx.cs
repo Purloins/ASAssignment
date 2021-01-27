@@ -30,112 +30,127 @@ namespace ASAssignment1
 
         protected void btnLogin_Click(object sender, EventArgs e)
         {
+            try {
+                // SQL Connection Strings to retrieve data from database
+                SqlConnection connection = new SqlConnection(MYDBConnectionString);
+                string sql = "SELECT * FROM Account WHERE Email=@0";
 
-            // SQL Connection Strings to retrieve data from database
-            SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "SELECT * FROM Account WHERE Email='" + tbEmail.Text + "'";
+                SqlCommand cmd = new SqlCommand(sql, connection);
+                cmd.Parameters.AddWithValue("@0", tbEmail.Text);
+                SqlDataAdapter da = new SqlDataAdapter();
+                da.SelectCommand = cmd;
+                DataSet ds = new DataSet();
+                da.Fill(ds);
 
-            SqlCommand cmd = new SqlCommand(sql, connection);
-            SqlDataAdapter da = new SqlDataAdapter();
-            da.SelectCommand = cmd;
-            DataSet ds = new DataSet();
-            da.Fill(ds);
-
-            // Since every person will have its unique ID, then there will only be one row.
-            // Use this information from this one row to display on the website.
-            if (ds.Tables[0].Rows.Count > 0)
-            {
-                string status = getLockStatus(HttpUtility.HtmlEncode(tbEmail.Text.ToString().Trim()));
-                
-                bool booStatus = bool.Parse(status);
-
-                if (ValidateCaptcha())
+                // Since every person will have its unique ID, then there will only be one row.
+                // Use this information from this one row to display on the website.
+                if (ds.Tables[0].Rows.Count > 0)
                 {
-                    // Login code
-                    string pwd = HttpUtility.HtmlEncode(tbPass.Text.ToString().Trim());
-                    string userID = HttpUtility.HtmlEncode(tbEmail.Text.ToString().Trim());
+                    string status = getLockStatus(HttpUtility.HtmlEncode(tbEmail.Text.ToString().Trim()));
 
-                    SHA512Managed hashing = new SHA512Managed();
-                    string dbHash = getDBHash(userID);
-                    string dbSalt = getDBSalt(userID);
+                    bool booStatus = bool.Parse(status);
 
-                    try
+                    if (ValidateCaptcha())
                     {
-                        if (dbSalt != null && dbSalt.Length > 0 && dbHash != null && dbHash.Length > 0)
+                        // Login code
+                        string pwd = HttpUtility.HtmlEncode(tbPass.Text.ToString().Trim());
+                        string userID = HttpUtility.HtmlEncode(tbEmail.Text.ToString().Trim());
+
+                        SHA512Managed hashing = new SHA512Managed();
+                        string dbHash = getDBHash(userID);
+                        string dbSalt = getDBSalt(userID);
+
+                        try
                         {
-                            string pwdWithSalt = pwd + dbSalt;
-                            byte[] hashwWithSalt = hashing.ComputeHash(Encoding.UTF8.GetBytes(pwdWithSalt));
-                            string userHash = Convert.ToBase64String(hashwWithSalt);
-
-                            if(booStatus == false)
+                            if (dbSalt != null && dbSalt.Length > 0 && dbHash != null && dbHash.Length > 0)
                             {
-                                if (userHash.Equals(dbHash))
+                                string pwdWithSalt = pwd + dbSalt;
+                                byte[] hashwWithSalt = hashing.ComputeHash(Encoding.UTF8.GetBytes(pwdWithSalt));
+                                string userHash = Convert.ToBase64String(hashwWithSalt);
+
+                                if (booStatus == false)
                                 {
-
-                                    Session["UserID"] = userID;
-
-                                    // Create a new GUID and save into the session
-                                    string guid = Guid.NewGuid().ToString();
-                                    Session["AuthToken"] = guid;
-
-                                    // Create a new cookie with this GUID value
-                                    Response.Cookies.Add(new HttpCookie("AuthToken", guid));
-
-                                    Response.Redirect("Success.aspx", false);
-                                }
-                                else
-                                {
-                                    // Check for 3 login attempts
-                                    // If number of attempts reaches 3, lock the user out
-                                    if (attemptCount == 3)
+                                    DateTime timeStart = DateTime.Now;
+                                    DateTime timeEnd = getTimeEnd(userID);
+                                    TimeSpan remainTimeLeft = getRemainingTime(timeEnd, timeStart);
+                                    if (remainTimeLeft <= TimeSpan.Zero)
                                     {
-                                        
-                                        setLockStatus(tbEmail.Text);
-                                        attemptCount = 0;
-
-                                        DateTime timeNow = DateTime.Now;
-                                        DateTime timerLOL = DateTime.Now.AddMinutes(10);
-                                        setLockTime(timeNow, userID);
-                                        setLockEnd(timerLOL, userID);
-                                        TimeSpan remainTime = getRemainingTime(timerLOL, timeNow);
-                                        lbErrorMsg.Text = "Your account has been temporarily locked due to three invalid login attempts.<br> Time left: " + remainTime;
+                                        setLockStatusFalse(tbEmail.Text);
                                     }
-                                    else if (booStatus == true)
+
+                                    if (userHash.Equals(dbHash))
                                     {
-                                        lbErrorMsg.Text = "Your account has been locked out temporarily.";
+
+                                        Session["UserID"] = userID;
+
+                                        // Create a new GUID and save into the session
+                                        string guid = Guid.NewGuid().ToString();
+                                        Session["AuthToken"] = guid;
+
+                                        // Create a new cookie with this GUID value
+                                        Response.Cookies.Add(new HttpCookie("AuthToken", guid));
+
+                                        Response.Redirect("Success.aspx", false);
                                     }
                                     else
                                     {
-                                        attemptCount = attemptCount + 1;
-                                        attemptLeft = 3 - attemptCount;
-                                        lbErrorMsg.Text = "Wrong username or password. <br>" + "Total number of attempts left: " + attemptLeft;
+                                        // Check for 3 login attempts
+                                        // If number of attempts reaches 3, lock the user out
+                                        if (attemptCount == 3)
+                                        {
+
+                                            setLockStatus(tbEmail.Text);
+                                            attemptCount = 0;
+
+                                            DateTime timeNow = DateTime.Now;
+                                            DateTime timerLOL = DateTime.Now.AddMinutes(10);
+                                            setLockTime(timeNow, userID);
+                                            setLockEnd(timerLOL, userID);
+                                            TimeSpan remainTime = getRemainingTime(timerLOL, timeNow);
+                                            lbErrorMsg.Text = "Your account has been temporarily locked due to three invalid login attempts.<br> Time left: " + remainTime;
+                                        }
+                                        else if (booStatus == true)
+                                        {
+                                            lbErrorMsg.Text = "Your account has been locked out temporarily.";
+                                        }
+                                        else
+                                        {
+                                            attemptCount = attemptCount + 1;
+                                            attemptLeft = 3 - attemptCount;
+                                            lbErrorMsg.Text = "Wrong username or password. <br>" + "Total number of attempts left: " + attemptLeft;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    DateTime timeStart = DateTime.Now;
+                                    DateTime timeEnd = getTimeEnd(userID);
+                                    TimeSpan remainTime = getRemainingTime(timeEnd, timeStart);
+                                    lbErrorMsg.Text = "Your account has been locked out temporarily. <br> Time left: " + remainTime;
+
+                                    if (remainTime <= TimeSpan.Zero)
+                                    {
+                                        setLockStatusFalse(tbEmail.Text);
                                     }
                                 }
                             }
-                            else
-                            {
-                                DateTime timeStart = DateTime.Now;
-                                DateTime timeEnd = getTimeEnd(userID);
-                                TimeSpan remainTime = getRemainingTime(timeEnd, timeStart);
-                                lbErrorMsg.Text = "Your account has been locked out temporarily. <br> Time left: " + remainTime;
-
-                                if (remainTime <= TimeSpan.Zero)
-                                {
-                                    setLockStatusFalse(tbEmail.Text);
-                                }
-                            }
                         }
+                        catch (Exception ex)
+                        {
+                            throw new Exception(ex.ToString());
+                        }
+                        finally { }
                     }
-                    catch (Exception ex)
-                    {
-                        throw new Exception(ex.ToString());
-                    }
-                    finally { }
+                }
+                else
+                {
+                    lbErrorMsg.Text = "Invalid username or password.";
                 }
             }
-            else
+            catch (SqlException ex)
             {
-                lbErrorMsg.Text = "Invalid username or password.";
+                lbErrorMsg.Text = "Error!";
+                throw new Exception(ex.ToString());
             }
         }
         private string getLockStatus(string userid)
