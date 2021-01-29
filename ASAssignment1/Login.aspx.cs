@@ -181,19 +181,24 @@ namespace ASAssignment1
         private void setLockTime(DateTime time, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET LockoutTime='" + time + "' WHERE Email='" + userid + "'";
+            string sql = "UPDATE Account SET LockoutTime=@TIME WHERE Email='@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@TIME", time);
+            cmd.Parameters.AddWithValue("@USERID", userid);
             cmd.ExecuteNonQuery();
         }
         private void setLockEnd(DateTime time, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET LockoutEndTime='" + time + "' WHERE Email='" + userid + "'";
+            string sql = "UPDATE Account SET LockoutEndTime=@TIME WHERE Email='@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@TIME", time);
+            cmd.Parameters.AddWithValue("@USERID", userid);
+
             cmd.ExecuteNonQuery();
         }
         private TimeSpan getRemainingTime(DateTime timeStart, DateTime timeEnd)
@@ -226,19 +231,21 @@ namespace ASAssignment1
         private void setLockStatus(string email)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET LockStatus='true' WHERE Email='" + email + "'";
+            string sql = "UPDATE Account SET LockStatus='true' WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@USERID", email);
             cmd.ExecuteNonQuery();
         }
         private void setLockStatusFalse(string email)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET LockStatus='false' WHERE Email='" + email + "'";
+            string sql = "UPDATE Account SET LockStatus='false' WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@USERID", email);
             cmd.ExecuteNonQuery();
         }
         protected string getDBHash(string userid)
