@@ -31,7 +31,7 @@
                         <br />
                 <br />
                     </div>
-            <hr style="height:2px;border-width:0;color:gray;background-color:gray;width:800px">
+            <hr style="height:2px;border-width:0;color:gray;background-color:gray;width:800px" />
         </div>
         <p class="auto-style5">
             <asp:HyperLink ID="HyperLink1" runat="server" Font-Names="Century Gothic" NavigateUrl="~/Login.aspx">Login</asp:HyperLink>

@@ -87,6 +87,15 @@ namespace ASAssignment1
         protected global::System.Web.UI.WebControls.Label lbUserID;
 
         /// <summary>
+        /// lbTimer control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbTimer;
+
+        /// <summary>
         /// Label3 control.
         /// </summary>
         /// <remarks>
@@ -141,6 +150,24 @@ namespace ASAssignment1
         protected global::System.Web.UI.WebControls.Label lbDOB;
 
         /// <summary>
+        /// Label6 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label Label6;
+
+        /// <summary>
+        /// lbDTR control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbDTR;
+
+        /// <summary>
         /// lbCcNo control.
         /// </summary>
         /// <remarks>
@@ -184,5 +211,14 @@ namespace ASAssignment1
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnLogout;
+
+        /// <summary>
+        /// btnChangePwd control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnChangePwd;
     }
 }

@@ -22,7 +22,7 @@
                 <br />
             </div>
         <div>
-            <hr style="height:2px;border-width:0;color:gray;background-color:gray;width:800px">
+            <hr style="height:2px;border-width:0;color:gray;background-color:gray;width:800px" />
         </div>
         </div>
         <p class="auto-style1">
@@ -36,6 +36,9 @@
                     <asp:Label ID="Label2" runat="server" Text="User ID:" Font-Bold="True" Font-Names="Century Gothic"></asp:Label>
                 &nbsp;<asp:Label ID="lbUserID" runat="server" Text="lbUserID" Font-Names="Century Gothic"></asp:Label>
                 </p>
+        <p class="auto-style1">
+            <asp:Label ID="lbTimer" runat="server"></asp:Label>
+        </p>
         <p class="auto-style1">
             &nbsp;</p>
         <p class="auto-style1">
@@ -51,6 +54,10 @@
                 &nbsp;<asp:Label ID="lbDOB" runat="server" Text="lbDOB" Font-Names="Century Gothic"></asp:Label>
                 </p>
         <p class="auto-style1">
+                    <asp:Label ID="Label6" runat="server" Text="Joined on: " Font-Bold="True" Font-Names="Century Gothic"></asp:Label>
+                    <asp:Label ID="lbDTR" runat="server" Text="lbDTR" Font-Names="Century Gothic"></asp:Label>
+                </p>
+        <p class="auto-style1">
             &nbsp;</p>
         <p class="auto-style1">
                     <asp:Label ID="lbCcNo" runat="server" Text="Credit Card No." Font-Bold="True" Font-Names="Century Gothic"></asp:Label>
@@ -62,6 +69,9 @@
                 </p>
     <p class="auto-style1">
         <asp:Button ID="btnLogout" runat="server" OnClick="btnLogout_Click" Text="Logout" Width="257px" />
+        </p>
+        <p class="auto-style1">
+        <asp:Button ID="btnChangePwd" runat="server" OnClick="btnChangePwd_Click" Text="Change Password" Width="257px" />
         </p>
     </form>
     </body>

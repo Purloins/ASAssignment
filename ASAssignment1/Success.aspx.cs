@@ -115,6 +115,10 @@ namespace ASAssignment1
                     }
                     lbCc.Text = decryptData(cc);
                     lbCcCVV.Text = decryptData(cccvv);
+
+                    DateTime maxpass = getMaxPassAge(userID);
+                    TimeSpan diff = getTimeDifference(maxpass, DateTime.Now);
+                    lbTimer.Text = diff.ToString();
                 }
             }
             catch (Exception ex)
@@ -142,6 +146,37 @@ namespace ASAssignment1
                 Request.Cookies["AuthToken"].Value = string.Empty;
                 Request.Cookies["AuthToken"].Expires = DateTime.Now.AddMonths(-20);
             }
+        }
+
+        protected void btnChangePwd_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("ChangePass.aspx", false);
+        }
+        protected TimeSpan getTimeDifference(DateTime maxPassAge, DateTime timeNow)
+        {
+            TimeSpan d = maxPassAge - timeNow;
+            return d;
+        }
+        protected DateTime getMaxPassAge(string userid)
+        {
+            string t = null;
+
+            SqlConnection con = new SqlConnection(MYDBConnectionString);
+            string sql = "SELECT MaxPassAge FROM Account WHERE Email=@USERID";
+            SqlCommand command = new SqlCommand(sql, con);
+            command.Parameters.AddWithValue("@USERID", userid);
+
+            con.Open();
+            using (SqlDataReader reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    t = reader["MaxPassAge"].ToString();
+                }
+            }
+
+            DateTime timeEnd = Convert.ToDateTime(t);
+            return timeEnd;
         }
     }
 }

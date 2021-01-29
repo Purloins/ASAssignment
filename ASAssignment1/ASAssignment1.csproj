@@ -71,6 +71,7 @@
     <Content Include="App_Data\Ass1DB_log.ldf">
       <DependentUpon>Ass1DB.mdf</DependentUpon>
     </Content>
+    <Content Include="ChangePass.aspx" />
     <Content Include="ErrorPages\GenericError.html" />
     <Content Include="ErrorPages\HTTP404.html" />
     <Content Include="ErrorPages\HTTP500.html" />
@@ -81,6 +82,13 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChangePass.aspx.cs">
+      <DependentUpon>ChangePass.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="ChangePass.aspx.designer.cs">
+      <DependentUpon>ChangePass.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

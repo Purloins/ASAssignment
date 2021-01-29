@@ -104,7 +104,7 @@ namespace ASAssignment1
             {
                 using (SqlConnection con = new SqlConnection(MYDBConnectionString))
                 {
-                    using (SqlCommand cmd = new SqlCommand("INSERT INTO Account VALUES(@FName,@LName,@Cc,@CcCVV,@Email,@PasswordHash,@PasswordSalt,@DOB,@DateTimeRegistered,@IV,@Key,@LockStatus,@LockoutTime,@LockoutEndTime)"))
+                    using (SqlCommand cmd = new SqlCommand("INSERT INTO Account VALUES(@FName,@LName,@Cc,@CcCVV,@Email,@PasswordHash,@PasswordSalt,@DOB,@DateTimeRegistered,@IV,@Key,@LockStatus,@LockoutTime,@LockoutEndTime,@MinPassAge,@MaxPassAge)"))
                     {
                         using (SqlDataAdapter sda = new SqlDataAdapter())
                         {
@@ -122,8 +122,10 @@ namespace ASAssignment1
                             cmd.Parameters.AddWithValue("@IV", Convert.ToBase64String(IV));
                             cmd.Parameters.AddWithValue("@Key", Convert.ToBase64String(Key));
                             cmd.Parameters.AddWithValue("@LockStatus", "false");
-                            cmd.Parameters.AddWithValue("@LockoutTime", DBNull.Value);
-                            cmd.Parameters.AddWithValue("@LockoutEndTime", DBNull.Value);
+                            cmd.Parameters.AddWithValue("@LockoutTime", DateTime.Now);
+                            cmd.Parameters.AddWithValue("@LockoutEndTime", DateTime.Now);
+                            cmd.Parameters.AddWithValue("@MinPassAge", DateTime.Now.AddMinutes(5));
+                            cmd.Parameters.AddWithValue("@MaxPassAge", DateTime.Now.AddMinutes(15));
 
                             cmd.Connection = con;
                             con.Open();

@@ -47,9 +47,9 @@ namespace ASAssignment1
                 if (ds.Tables[0].Rows.Count > 0)
                 {
                     string status = getLockStatus(HttpUtility.HtmlEncode(tbEmail.Text.ToString().Trim()));
-
+                    // Set booStatus (which will be LockoutStatus effectively) to status ^
                     bool booStatus = bool.Parse(status);
-
+                    // Check if Captcha is valid, if not, parse error
                     if (ValidateCaptcha())
                     {
                         // Login code
@@ -62,22 +62,24 @@ namespace ASAssignment1
 
                         try
                         {
+                            // If user exists in database, log them in
                             if (dbSalt != null && dbSalt.Length > 0 && dbHash != null && dbHash.Length > 0)
                             {
                                 string pwdWithSalt = pwd + dbSalt;
                                 byte[] hashwWithSalt = hashing.ComputeHash(Encoding.UTF8.GetBytes(pwdWithSalt));
                                 string userHash = Convert.ToBase64String(hashwWithSalt);
-
+                                // If LockoutStatus is false, they are allowed to log in
                                 if (booStatus == false)
                                 {
                                     DateTime timeStart = DateTime.Now;
                                     DateTime timeEnd = getTimeEnd(userID);
                                     TimeSpan remainTimeLeft = getRemainingTime(timeEnd, timeStart);
+                                    // If the user has already waited 10 minutes, set the Status to false
                                     if (remainTimeLeft <= TimeSpan.Zero)
                                     {
                                         setLockStatusFalse(tbEmail.Text);
                                     }
-
+                                    // If password matches database password
                                     if (userHash.Equals(dbHash))
                                     {
 
@@ -98,7 +100,8 @@ namespace ASAssignment1
                                         // If number of attempts reaches 3, lock the user out
                                         if (attemptCount == 3)
                                         {
-
+                                            // Once attempt count reaches 3, lock the account and reset AttemptCount back to 0.
+                                            // I have set the timer to 10 minutes.
                                             setLockStatus(tbEmail.Text);
                                             attemptCount = 0;
 
@@ -109,10 +112,12 @@ namespace ASAssignment1
                                             TimeSpan remainTime = getRemainingTime(timerLOL, timeNow);
                                             lbErrorMsg.Text = "Your account has been temporarily locked due to three invalid login attempts.<br> Time left: " + remainTime;
                                         }
+                                        // If account is already locked out,
                                         else if (booStatus == true)
                                         {
                                             lbErrorMsg.Text = "Your account has been locked out temporarily.";
                                         }
+                                        // If username or password is wrong,
                                         else
                                         {
                                             attemptCount = attemptCount + 1;
@@ -121,6 +126,7 @@ namespace ASAssignment1
                                         }
                                     }
                                 }
+                                // If lock status of account is true,
                                 else
                                 {
                                     DateTime timeStart = DateTime.Now;
@@ -195,27 +201,7 @@ namespace ASAssignment1
             TimeSpan timeLeft = timeStart.Subtract(timeEnd);
             return timeLeft;
         }
-        private DateTime getTimeStart(string userid)
-        {
-            string t = null;
 
-            SqlConnection con = new SqlConnection(MYDBConnectionString);
-            string sql = "SELECT LockoutTime FROM Account WHERE Email=@USERID";
-            SqlCommand command = new SqlCommand(sql, con);
-            command.Parameters.AddWithValue("@USERID", userid);
-
-            con.Open();
-            using (SqlDataReader reader = command.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    t = reader["LockoutTime"].ToString();
-                }
-            }
-
-            DateTime timeStarted = Convert.ToDateTime(t);
-            return timeStarted;
-        }
         private DateTime getTimeEnd(string userid)
         {
             string t = null;
