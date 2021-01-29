@@ -172,14 +172,16 @@ namespace ASAssignment1
         private void setNewPass(string newPasswordHash, string newPasswordSalt, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET PasswordHash=@NEWHASH WHERE Email='" + userid + "'";
-            string sql2 = "UPDATE Account SET PasswordSalt=@NEWSALT WHERE Email='" + userid + "'";
+            string sql = "UPDATE Account SET PasswordHash=@NEWHASH WHERE Email='@USERID";
+            string sql2 = "UPDATE Account SET PasswordSalt=@NEWSALT WHERE Email='@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
             SqlCommand cmd2 = new SqlCommand(sql2, connection);
             cmd.Parameters.AddWithValue("@NEWHASH", newPasswordHash);
+            cmd.Parameters.AddWithValue("@USERID", userid);
             cmd2.Parameters.AddWithValue("@NEWSALT", newPasswordSalt);
+            cmd2.Parameters.AddWithValue("@USERID", userid);
 
             cmd.ExecuteNonQuery();
             cmd2.ExecuteNonQuery();
@@ -229,19 +231,23 @@ namespace ASAssignment1
         private void setMinPassAge(DateTime time, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET MinPassAge='" + time + "' WHERE Email='" + userid + "'";
+            string sql = "UPDATE Account SET MinPassAge=@TIME WHERE Email='@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@TIME", time);
+            cmd.Parameters.AddWithValue("@USERID", userid);
             cmd.ExecuteNonQuery();
         }
         private void setMaxPassAge(DateTime time, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET MaxPassAge='" + time + "' WHERE Email='" + userid + "'";
+            string sql = "UPDATE Account SET MaxPassAge=@TIME WHERE Email='@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@TIME", time);
+            cmd.Parameters.AddWithValue("@USERID", userid);
             cmd.ExecuteNonQuery();
         }
         private TimeSpan getMinPassTime(DateTime timeStart, DateTime timeEnd)
