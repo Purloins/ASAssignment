@@ -67,6 +67,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="AlreadyLoggedIn.aspx" />
     <Content Include="App_Data\Ass1DB.mdf" />
     <Content Include="App_Data\Ass1DB_log.ldf">
       <DependentUpon>Ass1DB.mdf</DependentUpon>
@@ -82,6 +83,13 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AlreadyLoggedIn.aspx.cs">
+      <DependentUpon>AlreadyLoggedIn.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AlreadyLoggedIn.aspx.designer.cs">
+      <DependentUpon>AlreadyLoggedIn.aspx</DependentUpon>
+    </Compile>
     <Compile Include="ChangePass.aspx.cs">
       <DependentUpon>ChangePass.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

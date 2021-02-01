@@ -6,7 +6,7 @@
 <head runat="server">
     <title></title>
     <style type="text/css">
-        .fieldset {
+        fieldset {
             margin: auto;
         }
         .auto-style1 {

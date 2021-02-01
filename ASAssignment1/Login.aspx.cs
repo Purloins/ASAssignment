@@ -25,7 +25,14 @@ namespace ASAssignment1
 
         protected void Page_Load(object sender, EventArgs e)
         {
-
+            // Check whether user is signed in, if not, redirect to login page
+            if (Session["userID"] != null && Session["AuthToken"] != null && Request.Cookies["AuthToken"] != null)
+            {
+                if (Session["AuthToken"].ToString().Equals(Request.Cookies["AuthToken"].Value))
+                {
+                    Response.Redirect("AlreadyLoggedIn.aspx", false);
+                }
+            }
         }
 
         protected void btnLogin_Click(object sender, EventArgs e)
@@ -82,16 +89,12 @@ namespace ASAssignment1
                                     // If password matches database password
                                     if (userHash.Equals(dbHash))
                                     {
-
                                         Session["UserID"] = userID;
-
                                         // Create a new GUID and save into the session
                                         string guid = Guid.NewGuid().ToString();
                                         Session["AuthToken"] = guid;
-
                                         // Create a new cookie with this GUID value
                                         Response.Cookies.Add(new HttpCookie("AuthToken", guid));
-
                                         Response.Redirect("Success.aspx", false);
                                     }
                                     else
@@ -110,7 +113,8 @@ namespace ASAssignment1
                                             setLockTime(timeNow, userID);
                                             setLockEnd(timerLOL, userID);
                                             TimeSpan remainTime = getRemainingTime(timerLOL, timeNow);
-                                            lbErrorMsg.Text = "Your account has been temporarily locked due to three invalid login attempts.<br> Time left: " + remainTime;
+
+                                            lbErrorMsg.Text = "Your account has been temporarily locked due to three invalid login attempts.<br> Time left: " + remainTime.Minutes + " minute(s) and " + remainTime.Seconds + " second(s)";
                                         }
                                         // If account is already locked out,
                                         else if (booStatus == true)
@@ -121,7 +125,7 @@ namespace ASAssignment1
                                         else
                                         {
                                             attemptCount = attemptCount + 1;
-                                            attemptLeft = 3 - attemptCount;
+                                            attemptLeft = 4 - attemptCount;
                                             lbErrorMsg.Text = "Wrong username or password. <br>" + "Total number of attempts left: " + attemptLeft;
                                         }
                                     }
@@ -132,8 +136,8 @@ namespace ASAssignment1
                                     DateTime timeStart = DateTime.Now;
                                     DateTime timeEnd = getTimeEnd(userID);
                                     TimeSpan remainTime = getRemainingTime(timeEnd, timeStart);
-                                    lbErrorMsg.Text = "Your account has been locked out temporarily. <br> Time left: " + remainTime;
-
+                                    lbErrorMsg.Text = "Your account has been temporarily locked due to three invalid login attempts.<br> Time left: " + remainTime.Minutes + " minute(s) and " + remainTime.Seconds + " second(s)";
+                                    // When remaining time is below 0, automatically unlock the account
                                     if (remainTime <= TimeSpan.Zero)
                                     {
                                         setLockStatusFalse(tbEmail.Text);
@@ -181,7 +185,7 @@ namespace ASAssignment1
         private void setLockTime(DateTime time, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET LockoutTime=@TIME WHERE Email='@USERID";
+            string sql = "UPDATE Account SET LockoutTime=@TIME WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
@@ -192,7 +196,7 @@ namespace ASAssignment1
         private void setLockEnd(DateTime time, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET LockoutEndTime=@TIME WHERE Email='@USERID";
+            string sql = "UPDATE Account SET LockoutEndTime=@TIME WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);

@@ -25,7 +25,14 @@ namespace ASAssignment1
 
         protected void Page_Load(object sender, EventArgs e)
         {
-
+            // Check whether user is signed in, if not, redirect to login page
+            if (Session["userID"] != null && Session["AuthToken"] != null && Request.Cookies["AuthToken"] != null)
+            {
+                if (Session["AuthToken"].ToString().Equals(Request.Cookies["AuthToken"].Value))
+                {
+                    Response.Redirect("AlreadyLoggedIn.aspx", false);
+                }
+            }
         }
 
         protected void btnSubmit_Click(object sender, EventArgs e)

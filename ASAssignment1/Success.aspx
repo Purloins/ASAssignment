@@ -37,7 +37,8 @@
                 &nbsp;<asp:Label ID="lbUserID" runat="server" Text="lbUserID" Font-Names="Century Gothic"></asp:Label>
                 </p>
         <p class="auto-style1">
-            <asp:Label ID="lbTimer" runat="server"></asp:Label>
+                    <asp:Label ID="Label7" runat="server" Text="Change password before:" Font-Bold="True" Font-Names="Century Gothic"></asp:Label>
+                &nbsp;<asp:Label ID="lbTimer" runat="server"></asp:Label>
         </p>
         <p class="auto-style1">
             &nbsp;</p>

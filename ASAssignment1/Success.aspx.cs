@@ -28,6 +28,24 @@ namespace ASAssignment1
                 {
                     userID = (string)Session["userID"];
                     displayUserProfile(userID);
+
+                    // Set up SQL connection to retrieve MinPassAge and MaxPassAge
+                    SqlConnection connection = new SqlConnection(MYDBConnectionString);
+                    string sql = "SELECT * FROM Account WHERE Email=@userID";
+                    SqlCommand command = new SqlCommand(sql, connection);
+                    command.Parameters.AddWithValue("@userID", userID);
+                    // If 15 minutes has expired, bring them to the ChangePass page
+                    DateTime maxpass = getMaxPassAge(userID);
+                    TimeSpan diff = getTimeDifference(maxpass, DateTime.Now);
+                    if (diff <= TimeSpan.Zero)
+                    {
+                        Response.Redirect("ChangePass.aspx", false);
+                    }
+
+                    // Make Login and Register hyperlink invisible
+                    // Because why does the user need to login again?
+                    HyperLink1.Visible = false;
+                    HyperLink2.Visible = false;
                 }
             }
             else
@@ -66,6 +84,7 @@ namespace ASAssignment1
             finally { }
             return plainText;
         }
+        // Display user profile
         protected void displayUserProfile(string userID)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
@@ -96,6 +115,10 @@ namespace ASAssignment1
                         {
                             lbDOB.Text = reader["DOB"].ToString();
                         }
+                        if (reader["DateTimeRegistered"] != DBNull.Value)
+                        {
+                            lbDTR.Text = reader["DateTimeRegistered"].ToString();
+                        }
                         if (reader["Cc"] != DBNull.Value)
                         {
                             cc = Convert.FromBase64String(reader["Cc"].ToString());
@@ -118,7 +141,8 @@ namespace ASAssignment1
 
                     DateTime maxpass = getMaxPassAge(userID);
                     TimeSpan diff = getTimeDifference(maxpass, DateTime.Now);
-                    lbTimer.Text = diff.ToString();
+
+                    lbTimer.Text = "" + diff.Minutes + " minute(s) and " + diff.Seconds + " second(s)";
                 }
             }
             catch (Exception ex)

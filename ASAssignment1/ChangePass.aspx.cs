@@ -19,6 +19,25 @@ namespace ASAssignment1
         byte[] IV;
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Check whether user is signed in, if not, redirect to login page
+            if (Session["userID"] != null && Session["AuthToken"] != null && Request.Cookies["AuthToken"] != null)
+            {
+                if (!Session["AuthToken"].ToString().Equals(Request.Cookies["AuthToken"].Value))
+                {
+                    Response.Redirect("Login.aspx", false);
+                }
+                else
+                {
+                    // Make Login and Register hyperlink invisible
+                    // Because why does the user need to login again?
+                    HyperLink1.Visible = false;
+                    HyperLink2.Visible = false;
+                }
+            }
+            else
+            {
+                Response.Redirect("Login.aspx", false);
+            }
         }
 
         protected void btnChangePass_Click(object sender, EventArgs e)
@@ -172,8 +191,8 @@ namespace ASAssignment1
         private void setNewPass(string newPasswordHash, string newPasswordSalt, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET PasswordHash=@NEWHASH WHERE Email='@USERID";
-            string sql2 = "UPDATE Account SET PasswordSalt=@NEWSALT WHERE Email='@USERID";
+            string sql = "UPDATE Account SET PasswordHash=@NEWHASH WHERE Email=@USERID";
+            string sql2 = "UPDATE Account SET PasswordSalt=@NEWSALT WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
@@ -231,7 +250,7 @@ namespace ASAssignment1
         private void setMinPassAge(DateTime time, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET MinPassAge=@TIME WHERE Email='@USERID";
+            string sql = "UPDATE Account SET MinPassAge=@TIME WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
@@ -242,7 +261,7 @@ namespace ASAssignment1
         private void setMaxPassAge(DateTime time, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET MaxPassAge=@TIME WHERE Email='@USERID";
+            string sql = "UPDATE Account SET MaxPassAge=@TIME WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
