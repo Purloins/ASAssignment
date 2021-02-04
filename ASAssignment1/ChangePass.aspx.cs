@@ -45,10 +45,14 @@ namespace ASAssignment1
             string oldPwd = tbOldPass.Text.ToString().Trim();
             string newPwd = tbNewPass.Text.ToString().Trim();
             string userID = HttpUtility.HtmlEncode(tbEmail.Text.ToString().Trim());
-
+            // Get PasswordHash and PasswordSalt from database
             SHA512Managed hashing = new SHA512Managed();
             string dbHash = getDBHash(userID);
             string dbSalt = getDBSalt(userID);
+            // Get FirstHash from database
+            string fHash = getFirstHash(userID);
+            // Get SecondHash from database
+            string sHash = getSecondHash(userID);
 
             DateTime minPassAge = getMinPassAge(userID);
             // cantChangePass timespan is to check whether it has been 5 minutes or not.
@@ -68,6 +72,11 @@ namespace ASAssignment1
                         // If old password matches database password
                         if (userHash.Equals(dbHash))
                         {
+                            // If new password hash matches the 1st or 2nd password
+                            if (userHash.Equals(fHash) || userHash.Equals(sHash))
+                            {
+                                lbErrorMsg.Text = "Please do not use an old password.";
+                            }
                             // Generate random "salt"
                             RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
                             byte[] saltByte = new byte[8];
@@ -96,6 +105,11 @@ namespace ASAssignment1
 
                             setMinPassAge(timeMin, userID);
                             setMaxPassAge(timeMax, userID);
+                            // Add old password into PS2 and PH2
+                            // Why not PS/H1? Because that is occupied by the ORIGINAL password.
+                            setSecondPH(finalHash, userID);
+                            setSecondPS(salt, userID);
+
                             Response.Redirect("Success.aspx", false);
                         }
                         // If old password does not match the password in the database,
@@ -126,7 +140,7 @@ namespace ASAssignment1
             string h = null;
 
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "SELECT PasswordHash FROM Account WHERE Email=@USERID";
+            string sql = "SELECT PasswordHash FROM Password WHERE Email=@USERID";
             SqlCommand command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@USERID", userid);
 
@@ -160,7 +174,7 @@ namespace ASAssignment1
             string s = null;
 
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "SELECT PasswordSalt FROM Account WHERE Email=@USERID";
+            string sql = "SELECT PasswordSalt FROM Password WHERE Email=@USERID";
             SqlCommand command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@USERID", userid);
 
@@ -188,11 +202,77 @@ namespace ASAssignment1
             finally { connection.Close(); }
             return s;
         }
+        protected string getFirstHash(string userid)
+        {
+            string h = null;
+
+            SqlConnection connection = new SqlConnection(MYDBConnectionString);
+            string sql = "SELECT PH1 FROM Password WHERE Email=@USERID";
+            SqlCommand command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@USERID", userid);
+
+            try
+            {
+                connection.Open();
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        if (reader["PH1"] != null)
+                        {
+                            if (reader["PH1"] != DBNull.Value)
+                            {
+                                h = reader["PH1"].ToString();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.ToString());
+            }
+            finally { connection.Close(); }
+            return h;
+        }
+        protected string getSecondHash(string userid)
+        {
+            string h = null;
+
+            SqlConnection connection = new SqlConnection(MYDBConnectionString);
+            string sql = "SELECT PH2 FROM Password WHERE Email=@USERID";
+            SqlCommand command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@USERID", userid);
+
+            try
+            {
+                connection.Open();
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        if (reader["PH2"] != null)
+                        {
+                            if (reader["PH2"] != DBNull.Value)
+                            {
+                                h = reader["PH2"].ToString();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.ToString());
+            }
+            finally { connection.Close(); }
+            return h;
+        }
         private void setNewPass(string newPasswordHash, string newPasswordSalt, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET PasswordHash=@NEWHASH WHERE Email=@USERID";
-            string sql2 = "UPDATE Account SET PasswordSalt=@NEWSALT WHERE Email=@USERID";
+            string sql = "UPDATE Password SET PasswordHash=@NEWHASH WHERE Email=@USERID";
+            string sql2 = "UPDATE Password SET PasswordSalt=@NEWSALT WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
@@ -210,7 +290,7 @@ namespace ASAssignment1
             string t = null;
 
             SqlConnection con = new SqlConnection(MYDBConnectionString);
-            string sql = "SELECT MinPassAge FROM Account WHERE Email=@USERID";
+            string sql = "SELECT MinPassAge FROM Password WHERE Email=@USERID";
             SqlCommand command = new SqlCommand(sql, con);
             command.Parameters.AddWithValue("@USERID", userid);
 
@@ -226,31 +306,10 @@ namespace ASAssignment1
             DateTime minPassAge = Convert.ToDateTime(t);
             return minPassAge;
         }
-        private DateTime getMaxPassAge(string userid)
-        {
-            string t = null;
-
-            SqlConnection con = new SqlConnection(MYDBConnectionString);
-            string sql = "SELECT MaxPassAge FROM Account WHERE Email=@USERID";
-            SqlCommand command = new SqlCommand(sql, con);
-            command.Parameters.AddWithValue("@USERID", userid);
-
-            con.Open();
-            using (SqlDataReader reader = command.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    t = reader["MaxPassAge"].ToString();
-                }
-            }
-
-            DateTime maxPassAge = Convert.ToDateTime(t);
-            return maxPassAge;
-        }
         private void setMinPassAge(DateTime time, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET MinPassAge=@TIME WHERE Email=@USERID";
+            string sql = "UPDATE Password SET MinPassAge=@TIME WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
@@ -261,7 +320,7 @@ namespace ASAssignment1
         private void setMaxPassAge(DateTime time, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET MaxPassAge=@TIME WHERE Email=@USERID";
+            string sql = "UPDATE Password SET MaxPassAge=@TIME WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
@@ -274,10 +333,27 @@ namespace ASAssignment1
             TimeSpan timeLeft = timeStart.Subtract(timeEnd);
             return timeLeft;
         }
-        private TimeSpan getMaxPassTime(DateTime timeStart, DateTime timeEnd)
+        private void setSecondPH(string hash, string userid)
         {
-            TimeSpan timeLeft = timeStart.Subtract(timeEnd);
-            return timeLeft;
+            SqlConnection connection = new SqlConnection(MYDBConnectionString);
+            string sql = "UPDATE Password SET PH2=@Hash WHERE Email=@USERID";
+
+            connection.Open();
+            SqlCommand cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@Hash", hash);
+            cmd.Parameters.AddWithValue("@USERID", userid);
+            cmd.ExecuteNonQuery();
+        }
+        private void setSecondPS(string salt, string userid)
+        {
+            SqlConnection connection = new SqlConnection(MYDBConnectionString);
+            string sql = "UPDATE Password SET PS2=@Salt WHERE Email=@USERID";
+
+            connection.Open();
+            SqlCommand cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@Salt", salt);
+            cmd.Parameters.AddWithValue("@USERID", userid);
+            cmd.ExecuteNonQuery();
         }
     }
 }

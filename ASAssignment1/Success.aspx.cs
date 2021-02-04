@@ -186,7 +186,7 @@ namespace ASAssignment1
             string t = null;
 
             SqlConnection con = new SqlConnection(MYDBConnectionString);
-            string sql = "SELECT MaxPassAge FROM Account WHERE Email=@USERID";
+            string sql = "SELECT MaxPassAge FROM Password WHERE Email=@USERID";
             SqlCommand command = new SqlCommand(sql, con);
             command.Parameters.AddWithValue("@USERID", userid);
 

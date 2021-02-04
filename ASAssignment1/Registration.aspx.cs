@@ -111,10 +111,12 @@ namespace ASAssignment1
             {
                 using (SqlConnection con = new SqlConnection(MYDBConnectionString))
                 {
-                    using (SqlCommand cmd = new SqlCommand("INSERT INTO Account VALUES(@FName,@LName,@Cc,@CcCVV,@Email,@PasswordHash,@PasswordSalt,@DOB,@DateTimeRegistered,@IV,@Key,@LockStatus,@LockoutTime,@LockoutEndTime,@MinPassAge,@MaxPassAge)"))
+                    using (SqlCommand cmd = new SqlCommand("INSERT INTO Account VALUES(@FName,@LName,@Cc,@CcCVV,@Email,@DOB,@DateTimeRegistered,@IV,@Key)"))
                     {
                         using (SqlDataAdapter sda = new SqlDataAdapter())
                         {
+                            // I use two tables so it's easier to seperate password and user information.
+                            // First is user information.
                             cmd.CommandType = CommandType.Text;
                             cmd.Parameters.AddWithValue("@FName", HttpUtility.HtmlEncode(tbFName.Text.Trim()));
                             cmd.Parameters.AddWithValue("@LName", HttpUtility.HtmlEncode(tbLName.Text.Trim()));
@@ -122,22 +124,40 @@ namespace ASAssignment1
                             cmd.Parameters.AddWithValue("@Cc", Convert.ToBase64String(encryptData(tbCc.Text.Trim())));
                             cmd.Parameters.AddWithValue("@CcCVV", Convert.ToBase64String(encryptData(tbCcCVV.Text.Trim())));
                             cmd.Parameters.AddWithValue("@Email", HttpUtility.HtmlEncode(tbEmail.Text.Trim()));
-                            cmd.Parameters.AddWithValue("@PasswordHash", finalHash);
-                            cmd.Parameters.AddWithValue("@PasswordSalt", salt);
                             cmd.Parameters.AddWithValue("@DOB", HttpUtility.HtmlEncode(tbDob.Text.Trim()));
                             cmd.Parameters.AddWithValue("@DateTimeRegistered", DateTime.Now);
                             cmd.Parameters.AddWithValue("@IV", Convert.ToBase64String(IV));
                             cmd.Parameters.AddWithValue("@Key", Convert.ToBase64String(Key));
-                            cmd.Parameters.AddWithValue("@LockStatus", "false");
-                            cmd.Parameters.AddWithValue("@LockoutTime", DateTime.Now);
-                            cmd.Parameters.AddWithValue("@LockoutEndTime", DateTime.Now);
-                            cmd.Parameters.AddWithValue("@MinPassAge", DateTime.Now.AddMinutes(5));
-                            cmd.Parameters.AddWithValue("@MaxPassAge", DateTime.Now.AddMinutes(15));
 
                             cmd.Connection = con;
                             con.Open();
                             cmd.ExecuteNonQuery();
                             con.Close();
+                        }
+                    }
+                    using (SqlCommand cmd2 = new SqlCommand("INSERT INTO Password VALUES(@Email,@PasswordHash,@PasswordSalt,@PH1,@PS1,@PH2,@PS2,@LockStatus,@LockoutTime,@LockoutEndTime,@MinPassAge,@MaxPassAge)"))
+                    {
+                        using (SqlDataAdapter sda2 = new SqlDataAdapter())
+                        {
+                            cmd2.CommandType = CommandType.Text;
+                            // Now its the password information.
+                            cmd2.Parameters.AddWithValue("@Email", HttpUtility.HtmlEncode(tbEmail.Text.Trim()));
+                            cmd2.Parameters.AddWithValue("@PasswordHash", finalHash);
+                            cmd2.Parameters.AddWithValue("@PasswordSalt", salt);
+                            cmd2.Parameters.AddWithValue("@PH1", finalHash);
+                            cmd2.Parameters.AddWithValue("@PS1", salt);
+                            cmd2.Parameters.AddWithValue("@PH2", DBNull.Value);
+                            cmd2.Parameters.AddWithValue("@PS2", DBNull.Value);
+                            cmd2.Parameters.AddWithValue("@LockStatus", "false");
+                            cmd2.Parameters.AddWithValue("@LockoutTime", DateTime.Now);
+                            cmd2.Parameters.AddWithValue("@LockoutEndTime", DateTime.Now);
+                            cmd2.Parameters.AddWithValue("@MinPassAge", DateTime.Now.AddMinutes(5));
+                            cmd2.Parameters.AddWithValue("@MaxPassAge", DateTime.Now.AddMinutes(15));
+
+                            cmd2.Connection = con;
+                            con.Open();
+                            cmd2.ExecuteNonQuery();
+                            con.Close();    
                         }
                     }
                 }

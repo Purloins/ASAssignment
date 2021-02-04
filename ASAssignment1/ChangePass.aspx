@@ -43,11 +43,11 @@
                     <br />
                     <br />
                 <asp:Label ID="Label4" runat="server" Text="Old Password: "></asp:Label>
-                <asp:TextBox ID="tbOldPass" runat="server"></asp:TextBox>
+                <asp:TextBox ID="tbOldPass" runat="server" TextMode="Password"></asp:TextBox>
                 <br />
                 <br />
                 <asp:Label ID="Label5" runat="server" Text="New Password: "></asp:Label>
-                <asp:TextBox ID="tbNewPass" runat="server"></asp:TextBox>
+                <asp:TextBox ID="tbNewPass" runat="server" TextMode="Password"></asp:TextBox>
                 <br />
                 <br />
                 <asp:Button ID="btnChangePass" runat="server" Text="Change Password" OnClick="btnChangePass_Click" />

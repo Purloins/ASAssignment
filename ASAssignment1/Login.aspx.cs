@@ -40,10 +40,10 @@ namespace ASAssignment1
             try {
                 // SQL Connection Strings to retrieve data from database
                 SqlConnection connection = new SqlConnection(MYDBConnectionString);
-                string sql = "SELECT * FROM Account WHERE Email=@0";
-
+                string sql = "SELECT * FROM Password WHERE Email=@USERID";
+                // Open SQL connection to run the command to retrieve data from database
                 SqlCommand cmd = new SqlCommand(sql, connection);
-                cmd.Parameters.AddWithValue("@0", tbEmail.Text);
+                cmd.Parameters.AddWithValue("@USERID", tbEmail.Text);
                 SqlDataAdapter da = new SqlDataAdapter();
                 da.SelectCommand = cmd;
                 DataSet ds = new DataSet();
@@ -62,11 +62,11 @@ namespace ASAssignment1
                         // Login code
                         string pwd = HttpUtility.HtmlEncode(tbPass.Text.ToString().Trim());
                         string userID = HttpUtility.HtmlEncode(tbEmail.Text.ToString().Trim());
-
+                        // Hashing to find whether login password is same as database password
                         SHA512Managed hashing = new SHA512Managed();
                         string dbHash = getDBHash(userID);
                         string dbSalt = getDBSalt(userID);
-
+                        
                         try
                         {
                             // If user exists in database, log them in
@@ -97,6 +97,7 @@ namespace ASAssignment1
                                         Response.Cookies.Add(new HttpCookie("AuthToken", guid));
                                         Response.Redirect("Success.aspx", false);
                                     }
+                                    // If password does NOT match database password
                                     else
                                     {
                                         // Check for 3 login attempts
@@ -168,7 +169,7 @@ namespace ASAssignment1
             string s = null;
 
             SqlConnection con = new SqlConnection(MYDBConnectionString);
-            string sql = "SELECT LockStatus FROM Account WHERE Email=@USERID";
+            string sql = "SELECT LockStatus FROM Password WHERE Email=@USERID";
             SqlCommand command = new SqlCommand(sql, con);
             command.Parameters.AddWithValue("@USERID", userid);
 
@@ -185,7 +186,7 @@ namespace ASAssignment1
         private void setLockTime(DateTime time, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET LockoutTime=@TIME WHERE Email=@USERID";
+            string sql = "UPDATE Password SET LockoutTime=@TIME WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
@@ -196,7 +197,7 @@ namespace ASAssignment1
         private void setLockEnd(DateTime time, string userid)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET LockoutEndTime=@TIME WHERE Email=@USERID";
+            string sql = "UPDATE Password SET LockoutEndTime=@TIME WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
@@ -216,7 +217,7 @@ namespace ASAssignment1
             string t = null;
 
             SqlConnection con = new SqlConnection(MYDBConnectionString);
-            string sql = "SELECT LockoutEndTime FROM Account WHERE Email=@USERID";
+            string sql = "SELECT LockoutEndTime FROM Password WHERE Email=@USERID";
             SqlCommand command = new SqlCommand(sql, con);
             command.Parameters.AddWithValue("@USERID", userid);
 
@@ -235,7 +236,7 @@ namespace ASAssignment1
         private void setLockStatus(string email)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET LockStatus='true' WHERE Email=@USERID";
+            string sql = "UPDATE Password SET LockStatus='true' WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
@@ -245,7 +246,7 @@ namespace ASAssignment1
         private void setLockStatusFalse(string email)
         {
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "UPDATE Account SET LockStatus='false' WHERE Email=@USERID";
+            string sql = "UPDATE Password SET LockStatus='false' WHERE Email=@USERID";
 
             connection.Open();
             SqlCommand cmd = new SqlCommand(sql, connection);
@@ -257,7 +258,7 @@ namespace ASAssignment1
             string h = null;
 
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "SELECT PasswordHash FROM Account WHERE Email=@USERID";
+            string sql = "SELECT PasswordHash FROM Password WHERE Email=@USERID";
             SqlCommand command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@USERID", userid);
 
@@ -291,7 +292,7 @@ namespace ASAssignment1
             string s = null;
 
             SqlConnection connection = new SqlConnection(MYDBConnectionString);
-            string sql = "SELECT PasswordSalt FROM Account WHERE Email=@USERID";
+            string sql = "SELECT PasswordSalt FROM Password WHERE Email=@USERID";
             SqlCommand command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@USERID", userid);
 
