@@ -120,6 +120,9 @@
                     <asp:Label ID="lbPwrdChck" runat="server" Font-Names="New Gulim" ForeColor="Red"></asp:Label>
                 </p>
             <p>
+                    <asp:Label ID="lbEmailChck" runat="server" Font-Names="New Gulim" ForeColor="Red"></asp:Label>
+                </p>
+            <p>
                     &nbsp;</p>
             </fieldset>
         <p>

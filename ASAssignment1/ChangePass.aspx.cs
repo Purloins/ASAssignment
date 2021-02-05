@@ -69,14 +69,9 @@ namespace ASAssignment1
                         string pwdWithSalt = oldPwd + dbSalt;
                         byte[] hashwWithSalt = hashing.ComputeHash(Encoding.UTF8.GetBytes(pwdWithSalt));
                         string userHash = Convert.ToBase64String(hashwWithSalt);
-                        // If old password matches database password
+                        // If old password (userHash) matches database password
                         if (userHash.Equals(dbHash))
                         {
-                            // If new password hash matches the 1st or 2nd password
-                            if (userHash.Equals(fHash) || userHash.Equals(sHash))
-                            {
-                                lbErrorMsg.Text = "Please do not use an old password.";
-                            }
                             // Generate random "salt"
                             RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
                             byte[] saltByte = new byte[8];
@@ -98,7 +93,13 @@ namespace ASAssignment1
                             Key = cipher.Key;
                             IV = cipher.IV;
 
-                            setNewPass(finalHash, salt, userID);
+                            // If new password hash matches the 1st or 2nd password
+                            if (finalHash.Equals(fHash) || finalHash.Equals(sHash))
+                            {
+                                lbErrorMsg.Text = "Please do not use an old password.";
+                            }
+
+                           setNewPass(finalHash, salt, userID);
 
                             DateTime timeMin = DateTime.Now.AddMinutes(5);
                             DateTime timeMax = DateTime.Now.AddMinutes(15);

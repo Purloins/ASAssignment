@@ -39,69 +39,76 @@ namespace ASAssignment1
         {
             if (ValidateCaptcha())
             {
-                string pwd = tbPass.Text.ToString().Trim();
-                string cfmPwd = tbCfmPass.Text.ToString().Trim();
-                // Check whether Confirm Password is same as Password
-                if (pwd != cfmPwd)
+                if (!EmailCheck())
                 {
-                    Response.Redirect("Registration.aspx", false);
-                }
+                    string pwd = tbPass.Text.ToString().Trim();
+                    string cfmPwd = tbCfmPass.Text.ToString().Trim();
+                    // Check whether Confirm Password is same as Password
+                    if (pwd != cfmPwd)
+                    {
+                        Response.Redirect("Registration.aspx", false);
+                    }
 
-                // Creating the account
+                    // Creating the account
+                    else
+                    {
+                        // Client-side verificaiton for password checking
+                        int score = checkPwd(tbPass.Text);
+                        string status = "";
+                        switch (score)
+                        {
+                            case 1:
+                                status = "Very Weak";
+                                break;
+                            case 2:
+                                status = "Weak";
+                                break;
+                            case 3:
+                                status = "Medium";
+                                break;
+                            case 4:
+                                status = "Strong";
+                                break;
+                            case 5:
+                                status = "Excellent";
+                                break;
+                            default:
+                                break;
+                        }
+                        lbPwrdChck.Text = "Status: " + status;
+
+                        // Generate random "salt"
+                        RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+                        byte[] saltByte = new byte[8];
+
+                        // Fills array of bytes with a cryptographically strong sequence of random values
+                        rng.GetBytes(saltByte);
+                        salt = Convert.ToBase64String(saltByte);
+
+                        // Define hashing function
+                        SHA512Managed hashing = new SHA512Managed();
+
+                        string pwdWithSalt = pwd + salt;
+                        byte[] plainHash = hashing.ComputeHash(Encoding.UTF8.GetBytes(pwd));
+                        byte[] hashWithSalt = hashing.ComputeHash(Encoding.UTF8.GetBytes(pwdWithSalt));
+
+                        finalHash = Convert.ToBase64String(hashWithSalt);
+
+                        RijndaelManaged cipher = new RijndaelManaged();
+                        cipher.GenerateKey();
+                        Key = cipher.Key;
+                        IV = cipher.IV;
+
+                        // Call createAccount() method
+                        createAccount();
+
+                        // Redirect to login page
+                        Response.Redirect("Login.aspx");
+                    }
+                }
                 else
                 {
-                    // Client-side verificaiton for password checking
-                    int score = checkPwd(tbPass.Text);
-                    string status = "";
-                    switch (score)
-                    {
-                        case 1:
-                            status = "Very Weak";
-                            break;
-                        case 2:
-                            status = "Weak";
-                            break;
-                        case 3:
-                            status = "Medium";
-                            break;
-                        case 4:
-                            status = "Strong";
-                            break;
-                        case 5:
-                            status = "Excellent";
-                            break;
-                        default:
-                            break;
-                    }
-                    lbPwrdChck.Text = "Status: " + status;
-
-                    // Generate random "salt"
-                    RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-                    byte[] saltByte = new byte[8];
-
-                    // Fills array of bytes with a cryptographically strong sequence of random values
-                    rng.GetBytes(saltByte);
-                    salt = Convert.ToBase64String(saltByte);
-
-                    // Define hashing function
-                    SHA512Managed hashing = new SHA512Managed();
-
-                    string pwdWithSalt = pwd + salt;
-                    byte[] plainHash = hashing.ComputeHash(Encoding.UTF8.GetBytes(pwd));
-                    byte[] hashWithSalt = hashing.ComputeHash(Encoding.UTF8.GetBytes(pwdWithSalt));
-
-                    finalHash = Convert.ToBase64String(hashWithSalt);
-
-                    RijndaelManaged cipher = new RijndaelManaged();
-                    cipher.GenerateKey();
-                    Key = cipher.Key;
-                    IV = cipher.IV;
-
-                    // Call createAccount() method
-                    createAccount();
-
-                    // Redirect to login page
-                    Response.Redirect("Login.aspx");
+                    lbEmailChck.Text = "E-mail already exists!";
                 }
             }
         }
@@ -109,57 +116,64 @@ namespace ASAssignment1
         {
             try
             {
-                using (SqlConnection con = new SqlConnection(MYDBConnectionString))
+                if (!EmailCheck())
                 {
-                    using (SqlCommand cmd = new SqlCommand("INSERT INTO Account VALUES(@FName,@LName,@Cc,@CcCVV,@Email,@DOB,@DateTimeRegistered,@IV,@Key)"))
+                    using (SqlConnection con = new SqlConnection(MYDBConnectionString))
                     {
-                        using (SqlDataAdapter sda = new SqlDataAdapter())
+                        using (SqlCommand cmd = new SqlCommand("INSERT INTO Account VALUES(@FName,@LName,@Cc,@CcCVV,@Email,@DOB,@DateTimeRegistered,@IV,@Key)"))
                         {
-                            // I use two tables so it's easier to seperate password and user information.
-                            // First is user information.
-                            cmd.CommandType = CommandType.Text;
-                            cmd.Parameters.AddWithValue("@FName", HttpUtility.HtmlEncode(tbFName.Text.Trim()));
-                            cmd.Parameters.AddWithValue("@LName", HttpUtility.HtmlEncode(tbLName.Text.Trim()));
-                            // Credit card information is encrypted
-                            cmd.Parameters.AddWithValue("@Cc", Convert.ToBase64String(encryptData(tbCc.Text.Trim())));
-                            cmd.Parameters.AddWithValue("@CcCVV", Convert.ToBase64String(encryptData(tbCcCVV.Text.Trim())));
-                            cmd.Parameters.AddWithValue("@Email", HttpUtility.HtmlEncode(tbEmail.Text.Trim()));
-                            cmd.Parameters.AddWithValue("@DOB", HttpUtility.HtmlEncode(tbDob.Text.Trim()));
-                            cmd.Parameters.AddWithValue("@DateTimeRegistered", DateTime.Now);
-                            cmd.Parameters.AddWithValue("@IV", Convert.ToBase64String(IV));
-                            cmd.Parameters.AddWithValue("@Key", Convert.ToBase64String(Key));
+                            using (SqlDataAdapter sda = new SqlDataAdapter())
+                            {
+                                // I use two tables so it's easier to seperate password and user information.
+                                // First is user information.
+                                cmd.CommandType = CommandType.Text;
+                                cmd.Parameters.AddWithValue("@FName", HttpUtility.HtmlEncode(tbFName.Text.Trim()));
+                                cmd.Parameters.AddWithValue("@LName", HttpUtility.HtmlEncode(tbLName.Text.Trim()));
+                                // Credit card information is encrypted
+                                cmd.Parameters.AddWithValue("@Cc", Convert.ToBase64String(encryptData(tbCc.Text.Trim())));
+                                cmd.Parameters.AddWithValue("@CcCVV", Convert.ToBase64String(encryptData(tbCcCVV.Text.Trim())));
+                                cmd.Parameters.AddWithValue("@Email", HttpUtility.HtmlEncode(tbEmail.Text.Trim()));
+                                cmd.Parameters.AddWithValue("@DOB", HttpUtility.HtmlEncode(tbDob.Text.Trim()));
+                                cmd.Parameters.AddWithValue("@DateTimeRegistered", DateTime.Now);
+                                cmd.Parameters.AddWithValue("@IV", Convert.ToBase64String(IV));
+                                cmd.Parameters.AddWithValue("@Key", Convert.ToBase64String(Key));
 
-                            cmd.Connection = con;
-                            con.Open();
-                            cmd.ExecuteNonQuery();
-                            con.Close();
+                                cmd.Connection = con;
+                                con.Open();
+                                cmd.ExecuteNonQuery();
+                                con.Close();
+                            }
+                        }
+                        using (SqlCommand cmd2 = new SqlCommand("INSERT INTO Password VALUES(@Email,@PasswordHash,@PasswordSalt,@PH1,@PS1,@PH2,@PS2,@LockStatus,@LockoutTime,@LockoutEndTime,@MinPassAge,@MaxPassAge)"))
+                        {
+                            using (SqlDataAdapter sda2 = new SqlDataAdapter())
+                            {
+                                cmd2.CommandType = CommandType.Text;
+                                // Now its the password information.
+                                cmd2.Parameters.AddWithValue("@Email", HttpUtility.HtmlEncode(tbEmail.Text.Trim()));
+                                cmd2.Parameters.AddWithValue("@PasswordHash", finalHash);
+                                cmd2.Parameters.AddWithValue("@PasswordSalt", salt);
+                                cmd2.Parameters.AddWithValue("@PH1", finalHash);
+                                cmd2.Parameters.AddWithValue("@PS1", salt);
+                                cmd2.Parameters.AddWithValue("@PH2", DBNull.Value);
+                                cmd2.Parameters.AddWithValue("@PS2", DBNull.Value);
+                                cmd2.Parameters.AddWithValue("@LockStatus", "false");
+                                cmd2.Parameters.AddWithValue("@LockoutTime", DateTime.Now);
+                                cmd2.Parameters.AddWithValue("@LockoutEndTime", DateTime.Now);
+                                cmd2.Parameters.AddWithValue("@MinPassAge", DateTime.Now.AddMinutes(5));
+                                cmd2.Parameters.AddWithValue("@MaxPassAge", DateTime.Now.AddMinutes(15));
+
+                                cmd2.Connection = con;
+                                con.Open();
+                                cmd2.ExecuteNonQuery();
+                                con.Close();
+                            }
                         }
                     }
-                    using (SqlCommand cmd2 = new SqlCommand("INSERT INTO Password VALUES(@Email,@PasswordHash,@PasswordSalt,@PH1,@PS1,@PH2,@PS2,@LockStatus,@LockoutTime,@LockoutEndTime,@MinPassAge,@MaxPassAge)"))
-                    {
-                        using (SqlDataAdapter sda2 = new SqlDataAdapter())
-                        {
-                            cmd2.CommandType = CommandType.Text;
-                            // Now its the password information.
-                            cmd2.Parameters.AddWithValue("@Email", HttpUtility.HtmlEncode(tbEmail.Text.Trim()));
-                            cmd2.Parameters.AddWithValue("@PasswordHash", finalHash);
-                            cmd2.Parameters.AddWithValue("@PasswordSalt", salt);
-                            cmd2.Parameters.AddWithValue("@PH1", finalHash);
-                            cmd2.Parameters.AddWithValue("@PS1", salt);
-                            cmd2.Parameters.AddWithValue("@PH2", DBNull.Value);
-                            cmd2.Parameters.AddWithValue("@PS2", DBNull.Value);
-                            cmd2.Parameters.AddWithValue("@LockStatus", "false");
-                            cmd2.Parameters.AddWithValue("@LockoutTime", DateTime.Now);
-                            cmd2.Parameters.AddWithValue("@LockoutEndTime", DateTime.Now);
-                            cmd2.Parameters.AddWithValue("@MinPassAge", DateTime.Now.AddMinutes(5));
-                            cmd2.Parameters.AddWithValue("@MaxPassAge", DateTime.Now.AddMinutes(15));
-
-                            cmd2.Connection = con;
-                            con.Open();
-                            cmd2.ExecuteNonQuery();
-                            con.Close();    
-                        }
-                    }
+                }
+                else
+                {
+                    lbEmailChck.Text = "E-mail already exists!";
                 }
             }
             catch (Exception ex)
@@ -167,7 +181,24 @@ namespace ASAssignment1
                 throw new Exception(ex.ToString());
             }
         }
-
+        private bool EmailCheck()
+        {
+            SqlConnection con = new SqlConnection(MYDBConnectionString);
+            SqlCommand cmd = new SqlCommand("SELECT * FROM Account where Email=@Email", con);
+            cmd.Parameters.AddWithValue("@Email", tbEmail.Text.Trim());
+            con.Open();
+            SqlDataReader dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                // Make sure that email has a row in the database (exists)
+                if (dr.HasRows == true)
+                {
+                    lbEmailChck.Text = "Email already exists!";
+                    return true;
+                }
+            }
+            return false;
+        }
         private int checkPwd(string password)
         {
             int score = 0;
@@ -204,7 +235,7 @@ namespace ASAssignment1
 
             return score;
         }
-        protected byte [] encryptData(string data)
+        protected byte[] encryptData(string data)
         {
             byte[] cipherText = null;
             try
